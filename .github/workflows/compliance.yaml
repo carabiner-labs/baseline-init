@@ -33,7 +33,6 @@
         - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
           with:
             go-version-file: go.mod
-            cache: false
 
         - name: Setup bnd
           uses: carabiner-dev/actions/install/bnd@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
@@ -43,11 +42,6 @@
   
         - name: Setup unpack
           uses: carabiner-dev/actions/install/unpack@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
-  
-        - name: Build Scorecard
-          uses: carabiner-dev/actions/_demo/scorecard@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
-          with:
-            install-dir: /home/runner/.carabiner
   
         - name: Setup beaker
           uses: carabiner-dev/actions/install/beaker@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
@@ -59,7 +53,6 @@
           run: |
             mkdir attestations
             unpack extract . --ignore-other-codebases --files -f spdx --attest --networking=full > attestations/spdx.intoto.json
-            unpack extract . --ignore-other-codebases --files -f spdx --networking=full > attestations/${{ github.event.repository.name }}-${{ steps.tag.outputs.TAG }}.spdx.json
             bnd statement attestations/spdx.intoto.json --out attestations/spdx.bundle.json
             rm -f attestations/spdx.intoto.json
        
@@ -110,18 +103,23 @@
             rm -f attestations/repo.intoto.json
           id: attest-repo
   
-        - name: "Generate Scorecard Attestation"
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        - name: "Run Scorecard"
+          if: github.ref == 'refs/heads/main'
+          uses: ossf/scorecard-action@05b42c624433fc40578a4040d5cf5e36ddca8cde # v2.4.2
+          with:
+            results_file: attestations/scorecard.json
+            results_format: json
+            publish_results: false
+
+        - name: "Attest Scorecard Results"
+          if: github.ref == 'refs/heads/main'
           run: |
-            scorecard \
-              --repo=${{ github.repository }} \
-              --format=intoto \
-              --commit=${{ github.sha }} \
-              > attestations/scorecard.intoto.json
-  
-            bnd statement attestations/scorecard.intoto.json --out attestations/scorecard.bundle.json
-            rm -f attestations/scorecard.intoto.json
+            bnd predicate \
+              attestations/scorecard.json \
+              --subject="sha1:${{ github.sha }}" \
+              --out attestations/scorecard.bundle.json \
+              --type="https://security.scorecards.dev/api/v1"
+            rm -f attestations/scorecard.json
   
         - name: Attest tests
           env:
