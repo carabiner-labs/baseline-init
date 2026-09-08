@@ -234,7 +234,7 @@
             ampel verify \
               --subject="sha1:${{ github.sha }}" \
               --collector="jsonl:attestations.jsonl$([ -f /tmp/slsa-source/signed_bundle.intoto.jsonl ] && echo ',jsonl:/tmp/slsa-source/signed_bundle.intoto.jsonl')" \
-              --policy="git+https://github.com/deobieta/policies@refs/heads/fix/osps-baseline-pins-v3#sets/baseline/osps-baseline.policy.json" \
+              --policy="git+https://github.com/carabiner-dev/policies@8be6967a81c52b1aa45e2e21d72949c7f2f4c5b4#sets/baseline/osps-baseline.policy.json" \
               --exit-code="false" \
               --allow-empty-set-chain \
               --attest-results="true" \
