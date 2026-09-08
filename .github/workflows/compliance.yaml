@@ -8,7 +8,6 @@ name: OSPS Compliance
 # Pinned to main while the workflow is being developed.
 on:
   push:
-    branches: [ "master" ]
   workflow_dispatch:
 
 permissions: {}
